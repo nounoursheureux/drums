@@ -2,7 +2,7 @@
 
 MidiInput::MidiInput()
 {
-    snd_seq_open(&seq_handle, "default", SND_SEQ_OPEN_INPUT, 0);
+    snd_seq_open(&seq_handle, "default", SND_SEQ_OPEN_INPUT, SND_SEQ_NONBLOCK);
     snd_seq_set_client_name(seq_handle, "drums");
     in_port = snd_seq_create_simple_port(seq_handle, "listen:in", SND_SEQ_PORT_CAP_WRITE|SND_SEQ_PORT_CAP_SUBS_WRITE, SND_SEQ_PORT_TYPE_APPLICATION);
 

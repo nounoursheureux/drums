@@ -2,12 +2,13 @@
 #include <cstdlib>
 #include <cstdio>
 #include <iostream>
+#include <vector>
 #include "sound.hpp"
 #include "midi.hpp"
 
 struct CallbackData
 {
-    Sound* sound;
+    std::vector<Sound*> sounds;
 };
 
 static int patestCallback(const void* inputBuffer, void* outputBuffer, unsigned long framesPerBuffer, const PaStreamCallbackTimeInfo* timeInfo, PaStreamCallbackFlags statusFlags, void* userData)
@@ -16,20 +17,34 @@ static int patestCallback(const void* inputBuffer, void* outputBuffer, unsigned 
     CallbackData* cbData = static_cast<CallbackData*>(userData);
 
     for(unsigned int i = 0; i < framesPerBuffer; i++) {
-        if (cbData->sound->offset < cbData->sound->sample->sampleCount) {
-            if (cbData->sound->sample->channels == 1) {
-                *out++ = cbData->sound->sample->samples[cbData->sound->offset];
-                *out++ = cbData->sound->sample->samples[cbData->sound->offset];
-                cbData->sound->offset++;
-            } else if (cbData->sound->sample->channels == 2) {
-                *out++ = cbData->sound->sample->samples[cbData->sound->offset];
-                *out++ = cbData->sound->sample->samples[cbData->sound->offset+1];
-                cbData->sound->offset += 2;
+        out[0] = 0.f;
+        out[1] = 0.f;
+        for (auto it : cbData->sounds) {
+            if (it->offset < it->sample->sampleCount) {
+                if (it->sample->channels == 1) {
+                    out[0] += it->sample->samples[it->offset];
+                    out[1] += it->sample->samples[it->offset];
+                    it->offset++;
+                } else if (it->sample->channels == 2) {
+                    out[0] += it->sample->samples[it->offset];
+                    out[1] += it->sample->samples[it->offset+1];
+                    it->offset += 2;
+                }
             }
-        } else {
-            *out++ = 0.f;
-            *out++ = 0.f;
+
+            if (out[0] < -1.f) {
+                out[0] = -1.f;
+            } else if (out[0] > 1.f) {
+                out[0] = 1.f;
+            }
+
+            if (out[1] < -1.f) {
+                out[1] = -1.f;
+            } else if (out[1] > 1.f) {
+                out[1] = 1.f;
+            }
         }
+        out += 2;
     }
     return 0;
 }
@@ -48,12 +63,12 @@ int main()
     handle_error(err);
 
     SampleFile sample("samples/17");
-    Sound sound(&sample);
 
     std::cout << "Sample Rate: " << sample.sampleRate << "\nChannels: " << sample.channels << std::endl;
 
     CallbackData* cbData = new CallbackData();
-    cbData->sound = &sound;
+    cbData->sounds.reserve(10);
+    cbData->sounds.push_back(new Sound(&sample));
 
     PaStream* stream;
     err = Pa_OpenDefaultStream(&stream, 0, 2, paFloat32, 44100, 512, patestCallback, cbData);
@@ -68,9 +83,15 @@ int main()
         snd_seq_event_t* ev = midi.read();
         if (ev != nullptr) {
             if (ev->type == SND_SEQ_EVENT_NOTEON && ev->data.note.velocity) {
-                std::cout << "note on" << std::endl;
-            } else if (ev->type == SND_SEQ_EVENT_NOTEOFF || ev->type == SND_SEQ_EVENT_NOTEON) {
-                std::cout << "note off" << std::endl;
+                std::cout << "note on: " << int(ev->data.note.note) << std::endl;
+                cbData->sounds.push_back(new Sound(&sample));
+            }
+        }
+
+        for (unsigned int i = 0; i < cbData->sounds.size(); i++) {
+            if (cbData->sounds[i]->offset >= cbData->sounds[i]->sample->sampleCount) {
+                delete cbData->sounds[i];
+                cbData->sounds.erase(cbData->sounds.begin() + i);
             }
         }
     } 
