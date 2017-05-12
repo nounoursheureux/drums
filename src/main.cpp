@@ -13,8 +13,6 @@ struct CallbackData
     unsigned int channels;
 };
 
-static float* data;
-
 static int patestCallback(const void* inputBuffer, void* outputBuffer, unsigned long framesPerBuffer, const PaStreamCallbackTimeInfo* timeInfo, PaStreamCallbackFlags statusFlags, void* userData)
 {
     float* out = static_cast<float*>(outputBuffer);
