@@ -2,9 +2,8 @@
 #include <cstdlib>
 #include <cstdio>
 #include <iostream>
-#define DR_WAV_IMPLEMENTATION
-#include "dr_wav.h"
 #include "sound.hpp"
+#include "midi.hpp"
 
 struct CallbackData
 {
@@ -60,9 +59,21 @@ int main()
     err = Pa_OpenDefaultStream(&stream, 0, 2, paFloat32, 44100, 512, patestCallback, cbData);
     handle_error(err);
 
+    MidiInput midi;
+
     err = Pa_StartStream(stream);
     handle_error(err);
-    Pa_Sleep(1000);
+
+    while (true) {
+        snd_seq_event_t* ev = midi.read();
+        if (ev != nullptr) {
+            if (ev->type == SND_SEQ_EVENT_NOTEON && ev->data.note.velocity) {
+                std::cout << "note on" << std::endl;
+            } else if (ev->type == SND_SEQ_EVENT_NOTEOFF || ev->type == SND_SEQ_EVENT_NOTEON) {
+                std::cout << "note off" << std::endl;
+            }
+        }
+    } 
     
     err = Pa_StopStream(stream);
     handle_error(err);
