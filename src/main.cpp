@@ -62,13 +62,10 @@ int main()
     PaError err = Pa_Initialize();
     handle_error(err);
 
-    SampleFile sample("samples/17");
-
-    std::cout << "Sample Rate: " << sample.sampleRate << "\nChannels: " << sample.channels << std::endl;
+    SampleBank bank;
 
     CallbackData* cbData = new CallbackData();
     cbData->sounds.reserve(10);
-    cbData->sounds.push_back(new Sound(&sample));
 
     PaStream* stream;
     err = Pa_OpenDefaultStream(&stream, 0, 2, paFloat32, 44100, 512, patestCallback, cbData);
@@ -84,7 +81,7 @@ int main()
         if (ev != nullptr) {
             if (ev->type == SND_SEQ_EVENT_NOTEON && ev->data.note.velocity) {
                 std::cout << "note on: " << int(ev->data.note.note) << std::endl;
-                cbData->sounds.push_back(new Sound(&sample));
+                cbData->sounds.push_back(new Sound(bank.get(static_cast<unsigned int>(ev->data.note.note))));
             }
         }
 

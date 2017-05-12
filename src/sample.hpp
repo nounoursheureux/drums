@@ -2,6 +2,7 @@
 #define SAMPLE_HPP
 #include <cstdint>
 #include <string>
+#include <map>
 
 struct SampleFile
 {
@@ -16,6 +17,12 @@ struct SampleFile
 
 class SampleBank
 {
+public:
+    SampleBank();
+    ~SampleBank();
+    SampleFile* get(unsigned int id);
 
+private:
+    std::map<unsigned int, SampleFile*> samples;
 };
 #endif
