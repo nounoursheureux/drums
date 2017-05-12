@@ -4,13 +4,11 @@
 #include <iostream>
 #define DR_WAV_IMPLEMENTATION
 #include "dr_wav.h"
+#include "sound.hpp"
 
 struct CallbackData
 {
-    float* samples;
-    uint64_t sampleCount;
-    uint64_t offset;
-    unsigned int channels;
+    Sound* sound;
 };
 
 static int patestCallback(const void* inputBuffer, void* outputBuffer, unsigned long framesPerBuffer, const PaStreamCallbackTimeInfo* timeInfo, PaStreamCallbackFlags statusFlags, void* userData)
@@ -19,15 +17,15 @@ static int patestCallback(const void* inputBuffer, void* outputBuffer, unsigned 
     CallbackData* cbData = static_cast<CallbackData*>(userData);
 
     for(unsigned int i = 0; i < framesPerBuffer; i++) {
-        if (cbData->offset < cbData->sampleCount) {
-            if (cbData->channels == 1) {
-                *out++ = cbData->samples[cbData->offset];
-                *out++ = cbData->samples[cbData->offset];
-                cbData->offset++;
-            } else if (cbData->channels == 2) {
-                *out++ = cbData->samples[cbData->offset];
-                *out++ = cbData->samples[cbData->offset+1];
-                cbData->offset += 2;
+        if (cbData->sound->offset < cbData->sound->sample->sampleCount) {
+            if (cbData->sound->sample->channels == 1) {
+                *out++ = cbData->sound->sample->samples[cbData->sound->offset];
+                *out++ = cbData->sound->sample->samples[cbData->sound->offset];
+                cbData->sound->offset++;
+            } else if (cbData->sound->sample->channels == 2) {
+                *out++ = cbData->sound->sample->samples[cbData->sound->offset];
+                *out++ = cbData->sound->sample->samples[cbData->sound->offset+1];
+                cbData->sound->offset += 2;
             }
         } else {
             *out++ = 0.f;
@@ -50,21 +48,13 @@ int main()
     PaError err = Pa_Initialize();
     handle_error(err);
 
-    unsigned int channels, sampleRate;
-    uint64_t sampleCount;
-    float* pSamples = drwav_open_and_read_file_f32("samples/17", &channels, &sampleRate, &sampleCount);
-    if (pSamples == NULL) {
-        fputs("Couldn't read WAV file", stderr);
-        return 1;
-    }
+    SampleFile sample("samples/17");
+    Sound sound(&sample);
 
-    std::cout << "Sample Rate: " << sampleRate << "\nChannels: " << channels << std::endl;
+    std::cout << "Sample Rate: " << sample.sampleRate << "\nChannels: " << sample.channels << std::endl;
 
     CallbackData* cbData = new CallbackData();
-    cbData->samples = pSamples;
-    cbData->sampleCount = sampleCount;
-    cbData->channels = channels;
-    cbData->offset = 0;
+    cbData->sound = &sound;
 
     PaStream* stream;
     err = Pa_OpenDefaultStream(&stream, 0, 2, paFloat32, 44100, 512, patestCallback, cbData);
