@@ -1,7 +1,7 @@
 CC = g++
 CFLAGS = -Wall -Wextra -g -std=c++11
 LDFLAGS = -lportaudio -lasound
-OBJ = main.o sound.o sample.o midi.o
+OBJ = main.o sound.o sample.o midi.o sequencer.o
 
 all: drums
 
