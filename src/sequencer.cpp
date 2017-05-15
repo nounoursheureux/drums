@@ -1,16 +1,19 @@
 #include "sequencer.hpp"
 
-Sequencer::Sequencer(double bpm)
+Sequencer::Sequencer(unsigned int tracksNum, double bpm)
 {
     setBpm(bpm);
     latest_time = 0.0;
     elapsed_time = 0.0;
     current_quarter_beat = 0;
+    for (unsigned int i = 0; i < 16; i++) {
+        tracks.at(i).assign(tracksNum, false);
+    }
 }
 
 void Sequencer::set(unsigned int quarterBeat, unsigned int instrument, bool val)
 {
-    beats.at(quarterBeat).set(instrument, val);
+    tracks.at(quarterBeat).at(instrument) = val;
 }
 
 void Sequencer::setBpm(double bpm)
@@ -20,14 +23,14 @@ void Sequencer::setBpm(double bpm)
     time_per_quarter_beat = time_per_beat / 4.0;
 }
 
-std::bitset<9> Sequencer::get(unsigned int quarterBeat)
+std::vector<bool> Sequencer::get(unsigned int quarterBeat)
 {
-    return beats.at(quarterBeat);
+    return tracks.at(quarterBeat);
 }
 
-std::bitset<9> Sequencer::getCurrent()
+std::vector<bool> Sequencer::getCurrent()
 {
-    return beats.at(current_quarter_beat);
+    return tracks.at(current_quarter_beat);
 }
 
 bool Sequencer::update(double current_time)

@@ -11,7 +11,7 @@ void handle_error(PaError err)
     }
 }
 
-AudioEngine::AudioEngine(): sequencer(140.0)
+AudioEngine::AudioEngine(): sequencer(9, 140.0)
 {
     PaError err = Pa_Initialize();
     handle_error(err);
@@ -66,7 +66,7 @@ void AudioEngine::update()
     if (sequencer.update(current_time)) {
         auto instruments = sequencer.getCurrent();
         for (unsigned int i = 0; i < 9; i++) {
-            if (instruments.test(i)) {
+            if (instruments.at(i)) {
                 sounds.push_back(new Sound(bank.get(std::string("samples/") + std::to_string(i))));
             }
         }
@@ -88,7 +88,7 @@ void AudioEngine::update()
 void AudioEngine::writeToStream(signed long framesNum)
 {
     float* out = static_cast<float*>(malloc(framesNum * 2 * sizeof(float)));
-    for(unsigned int i = 0; i < framesNum * 2; i += 2) {
+    for(int i = 0; i < framesNum * 2; i += 2) {
         out[i] = 0.f;
         out[i+1] = 0.f;
         for (auto it : sounds) {
