@@ -14,8 +14,7 @@ public:
     Sequencer& getSequencer();
     SampleBank& getBank();
     void addSound(Sound* sound);
-    void addSound(unsigned int sampleID);
-    void setBpm(double bpm);
+    void addSound(std::string path);
     void update();
 
 private:
@@ -25,8 +24,5 @@ private:
     std::vector<Sound*> sounds;
     Sequencer sequencer;
     SampleBank bank;
-    PaTime latest_time, elapsed_time;
-    double time_per_quarter_beat;
-    unsigned int beat_number;
 };
 #endif

@@ -20,9 +20,10 @@ class SampleBank
 public:
     SampleBank();
     ~SampleBank();
-    SampleFile* get(unsigned int id);
+    void load(std::string path);
+    SampleFile* get(std::string path);
 
 private:
-    std::map<unsigned int, SampleFile*> samples;
+    std::map<std::string, SampleFile*> samples;
 };
 #endif

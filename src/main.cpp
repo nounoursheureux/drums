@@ -47,7 +47,8 @@ int main()
         if (ev != nullptr) {
             if (ev->type == SND_SEQ_EVENT_NOTEON && ev->data.note.velocity) {
                 unsigned int sample_id = ev->data.note.note % 9;
-                audio.addSound(sample_id);
+                std::string sample_path = std::string("samples/") + std::to_string(sample_id);
+                audio.addSound(sample_path);
             }
         }
     }

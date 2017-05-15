@@ -21,30 +21,34 @@ SampleFile::SampleFile(std::string path)
 
 SampleBank::SampleBank()
 {
-    for (unsigned int i = 0; i < 100; i++) {
-        std::string path = std::string("samples/") + std::to_string(i);
-        FILE* fp = fopen(path.c_str(), "rb");
-        if (fp == nullptr) {
-            continue;
-        }
-
-        std::cout << path << std::endl;
-        fclose(fp);
-        samples[i] = new SampleFile(path);
-    }
 }
 
 SampleBank::~SampleBank()
 {
-    for (unsigned int i = 0; i < 100; i++) {
-        auto it = samples.find(i);
-        if (it != samples.end()) {
-            delete it->second;
-        }
+    for (auto it : samples) {
+        delete it.second;
     }
 }
 
-SampleFile* SampleBank::get(unsigned int id)
+void SampleBank::load(std::string path)
 {
-    return samples.at(id);
+    // just check if the file exists
+    FILE* fp = fopen(path.c_str(), "rb");
+    if (fp == nullptr) {
+        throw std::runtime_error("Sample not found");
+    }
+
+    std::cout << path << std::endl;
+    fclose(fp);
+    samples[path] = new SampleFile(path);
+}
+
+SampleFile* SampleBank::get(std::string path)
+{
+    auto it = samples.find(path);
+    if (it == samples.end()) {
+        load(path);
+        return samples.at(path);
+    }
+    return it->second;
 }

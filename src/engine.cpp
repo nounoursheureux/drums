@@ -1,5 +1,6 @@
 #include "engine.hpp"
 #include <stdexcept>
+#include <iostream>
 
 void handle_error(PaError err)
 {
@@ -10,7 +11,7 @@ void handle_error(PaError err)
     }
 }
 
-AudioEngine::AudioEngine()
+AudioEngine::AudioEngine(): sequencer(140.0)
 {
     PaError err = Pa_Initialize();
     handle_error(err);
@@ -20,13 +21,6 @@ AudioEngine::AudioEngine()
 
     err = Pa_StartStream(stream);
     handle_error(err);
-
-    latest_time = Pa_GetStreamTime(stream);
-    elapsed_time = 0.0;
-
-    setBpm(140.0);
-
-    beat_number = 0;
 }
 
 AudioEngine::~AudioEngine()
@@ -60,33 +54,22 @@ void AudioEngine::addSound(Sound* sound)
     sounds.push_back(sound);
 }
 
-void AudioEngine::addSound(unsigned int sampleID)
+void AudioEngine::addSound(std::string path)
 {
-    sounds.push_back(new Sound(bank.get(sampleID)));
-}
-
-void AudioEngine::setBpm(double bpm)
-{
-    double bps = bpm / 60.0;
-    double time_per_beat = 1.0 / bps;
-    time_per_quarter_beat = time_per_beat / 4.0;
+    sounds.push_back(new Sound(bank.get(path)));
 }
 
 void AudioEngine::update()
 {
-    PaTime latestest_time = Pa_GetStreamTime(stream);
-    elapsed_time += latestest_time - latest_time;
-    latest_time = latestest_time;
+    PaTime current_time = Pa_GetStreamTime(stream);
 
-    if (elapsed_time >= time_per_quarter_beat) {
-        auto instruments = sequencer.get(beat_number);
+    if (sequencer.update(current_time)) {
+        auto instruments = sequencer.getCurrent();
         for (unsigned int i = 0; i < 9; i++) {
             if (instruments.test(i)) {
-                sounds.push_back(new Sound(bank.get(i)));
+                sounds.push_back(new Sound(bank.get(std::string("samples/") + std::to_string(i))));
             }
         }
-        elapsed_time -= time_per_quarter_beat;
-        beat_number = (beat_number + 1) % 16;
     }
     
     signed long writable = Pa_GetStreamWriteAvailable(stream);
