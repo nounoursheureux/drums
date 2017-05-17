@@ -1,13 +1,14 @@
 #include <Deuligne.h>
+#include "message.hpp"
 
-enum MessageType {
+/*enum MessageType {
   MSGTYPE_READY = 0,
   MSGTYPE_SET_BPM = 2,
 };
 
 struct Message {
   unsigned int type, arg1, arg2, arg3;
-};
+};*/
 
 Deuligne lcd;
 
