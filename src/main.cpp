@@ -3,10 +3,14 @@
 #include <cstdio>
 #include <iostream>
 #include <vector>
+#include <unistd.h>
+#include <termios.h>
+#include <fcntl.h>
 #include "sound.hpp"
 #include "midi.hpp"
 #include "sequencer.hpp"
 #include "engine.hpp"
+#include "arduino.hpp"
 
 int main()
 {
@@ -40,6 +44,8 @@ int main()
 
     MidiInput midi;
 
+    Arduino arduino;
+
     while (true) {
         audio.update();
 
@@ -49,6 +55,15 @@ int main()
                 unsigned int sample_id = ev->data.note.note % 9;
                 std::string sample_path = std::string("samples/") + std::to_string(sample_id);
                 audio.addSound(sample_path);
+            }
+        }
+        if (arduino.isMessageAvailable()) {
+            std::cout << "available" << std::endl;
+            Message msg = arduino.readMessage();
+            if (msg.type == MSGTYPE_READY && msg.arg1 == 0 && msg.arg2 == 0 && msg.arg3 == 0) {
+                // set bpm
+                Message msg(MSGTYPE_SET_BPM, 140, 0, 0);
+                arduino.writeMessage(msg);
             }
         }
     }
